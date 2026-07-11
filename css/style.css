@@ -280,6 +280,14 @@ input[type="text"]:focus { border-color: var(--pink-300); }
 /* ---------- filter previews ---------- */
 .stage-frame.f-bw video { filter: grayscale(1) contrast(1.05); }
 .stage-frame.f-vintage video { filter: sepia(0.45) contrast(1.05) saturate(1.3) brightness(1.02); }
+.stage-frame.f-blur video { filter: blur(7px) brightness(1.08) saturate(1.15); }
+
+/* ---------- font picker previews ---------- */
+.fp-dancing { font-family: 'Dancing Script', cursive; font-size: 16px; }
+.fp-pacifico { font-family: 'Pacifico', cursive; }
+.fp-yellowtail { font-family: 'Yellowtail', cursive; font-size: 15px; }
+.fp-caveat { font-family: 'Caveat', cursive; font-size: 16px; }
+.fp-bebas { font-family: 'Bebas Neue', sans-serif; letter-spacing: 1px; }
 
 /* ---------- result ---------- */
 .result-wrap { text-align: center; max-width: 520px; width: 100%; }

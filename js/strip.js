@@ -5,31 +5,41 @@ const Strip = (() => {
     normal: "none",
     bw: "grayscale(1) contrast(1.05)",
     vintage: "sepia(0.45) contrast(1.05) saturate(1.3) brightness(1.02)",
+    blur: "blur(7px) brightness(1.08) saturate(1.15)", // tren "kita blur" 🫰
+  };
+
+  // Font caption — key harus cocok dengan chip #ctl-font
+  const CAPTION_FONTS = {
+    dancing:    { css: '600 64px "Dancing Script", cursive',  dateGap: 44 },
+    pacifico:   { css: '54px Pacifico, cursive',              dateGap: 52 },
+    yellowtail: { css: '58px Yellowtail, cursive',            dateGap: 46 },
+    caveat:     { css: '600 68px Caveat, cursive',            dateGap: 42 },
+    bebas:      { css: '62px "Bebas Neue", sans-serif',       dateGap: 46 },
   };
 
   const THEMES = {
     pink: {
       bg: "#F5E6E8", border: "#FFFFFF", borderW: 10,
       captionColor: "#993556", dateColor: "#C97A93",
-      font: '600 64px "Dancing Script", cursive', dateFont: '500 26px Poppins, sans-serif',
+      dateFont: '500 26px Poppins, sans-serif',
       deco: "♥", decoColor: "#ED93B1",
     },
     film: {
       bg: "#1E1E1E", border: "#111111", borderW: 6,
       captionColor: "#F5F0E8", dateColor: "#B8B2A6",
-      font: '600 58px "Dancing Script", cursive', dateFont: '500 26px Poppins, sans-serif',
+      dateFont: '500 26px Poppins, sans-serif',
       deco: null, sprockets: true,
     },
     cream: {
       bg: "#FBF6EC", border: "#FFFFFF", borderW: 10,
       captionColor: "#8A6B3F", dateColor: "#BBA37E",
-      font: '600 62px "Dancing Script", cursive', dateFont: '500 26px Poppins, sans-serif',
+      dateFont: '500 26px Poppins, sans-serif',
       deco: "✿", decoColor: "#E8C766",
     },
     sky: {
       bg: "#E6F1FB", border: "#FFFFFF", borderW: 10,
       captionColor: "#185FA5", dateColor: "#7FA8CC",
-      font: '600 62px "Dancing Script", cursive', dateFont: '500 26px Poppins, sans-serif',
+      dateFont: '500 26px Poppins, sans-serif',
       deco: "♡", decoColor: "#85B7EB",
     },
   };
@@ -82,7 +92,7 @@ const Strip = (() => {
   }
 
   // Susun foto-foto jadi strip final
-  function composeStrip(photos, { layout, theme, caption, showDate }) {
+  function composeStrip(photos, { layout, theme, caption, showDate, captionFont }) {
     const L = LAYOUTS[layout], T = THEMES[theme];
     const rows = Math.ceil(L.shots / L.cols);
     const sidePad = T.sprockets ? PAD + 24 : PAD;
@@ -111,9 +121,10 @@ const Strip = (() => {
 
     // caption + tanggal
     const capTop = PAD + rows * L.photoH + (rows - 1) * GAP;
+    const F = CAPTION_FONTS[captionFont] || CAPTION_FONTS.dancing;
     ctx.textAlign = "center";
     if (caption) {
-      ctx.font = T.font;
+      ctx.font = F.css;
       ctx.fillStyle = T.captionColor;
       ctx.fillText(caption, W / 2, capTop + 78, W - sidePad * 2);
     }
@@ -126,7 +137,7 @@ const Strip = (() => {
       ].join(".");
       ctx.font = T.dateFont;
       ctx.fillStyle = T.dateColor;
-      ctx.fillText(dateStr, W / 2, capTop + (caption ? 122 : 70));
+      ctx.fillText(dateStr, W / 2, capTop + (caption ? 78 + F.dateGap : 70));
     }
 
     // dekorasi sudut
@@ -142,5 +153,5 @@ const Strip = (() => {
     return c;
   }
 
-  return { FILTERS, THEMES, LAYOUTS, capturePhoto, composeStrip };
+  return { FILTERS, THEMES, LAYOUTS, CAPTION_FONTS, capturePhoto, composeStrip };
 })();

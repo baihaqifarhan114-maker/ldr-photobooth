@@ -23,6 +23,7 @@
     filter: "normal",
     captionMode: "initials", // initials | names | custom
     customCaption: "",
+    captionFont: "dancing",
     showDate: true,
   };
 
@@ -91,6 +92,7 @@
     for (const [groupId, key] of [
       ["ctl-layout", "layout"], ["ctl-theme", "theme"],
       ["ctl-filter", "filter"], ["ctl-caption", "captionMode"],
+      ["ctl-font", "captionFont"],
     ]) {
       document.querySelectorAll(`#${groupId} .chip`).forEach((c) =>
         c.classList.toggle("active", c.dataset.value === state[key]));
@@ -100,9 +102,10 @@
       $("input-caption").value = state.customCaption;
     $("ctl-date").checked = state.showDate;
     const frame = $("stage-frame");
-    frame.classList.remove("f-bw", "f-vintage");
+    frame.classList.remove("f-bw", "f-vintage", "f-blur");
     if (state.filter === "bw") frame.classList.add("f-bw");
     if (state.filter === "vintage") frame.classList.add("f-vintage");
+    if (state.filter === "blur") frame.classList.add("f-blur");
   }
 
   // ---------- koneksi ----------
@@ -265,12 +268,14 @@
   }
 
   async function finishStrip() {
-    try { await document.fonts.load('600 64px "Dancing Script"'); } catch (_) {}
+    const F = Strip.CAPTION_FONTS[state.captionFont] || Strip.CAPTION_FONTS.dancing;
+    try { await document.fonts.load(F.css); } catch (_) {}
     resultCanvas = Strip.composeStrip(photos, {
       layout: state.layout,
       theme: state.theme,
       caption: captionText(),
       showDate: state.showDate,
+      captionFont: state.captionFont,
     });
     $("result-img").src = resultCanvas.toDataURL("image/png");
     show("result");
@@ -312,6 +317,7 @@
   setupChips("ctl-theme", "theme");
   setupChips("ctl-filter", "filter");
   setupChips("ctl-caption", "captionMode");
+  setupChips("ctl-font", "captionFont");
 
   $("input-caption").addEventListener("input", () => {
     state.customCaption = $("input-caption").value;
@@ -322,6 +328,8 @@
     Rtc.send({ t: "state", state });
   });
 
-  // preload font script buat canvas
-  try { document.fonts.load('600 64px "Dancing Script"'); } catch (_) {}
+  // preload semua font caption buat canvas
+  try {
+    for (const f of Object.values(Strip.CAPTION_FONTS)) document.fonts.load(f.css);
+  } catch (_) {}
 })();
