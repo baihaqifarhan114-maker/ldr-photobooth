@@ -66,19 +66,24 @@ const Strip = (() => {
     ctx.restore();
   }
 
-  // Satu jepretan = dua wajah berdampingan dalam satu foto
+  // Satu jepretan: dua wajah berdampingan, atau satu wajah full (solo, videoRight=null)
   function capturePhoto(videoLeft, videoRight, filterKey, w, h) {
     const c = document.createElement("canvas");
     c.width = w; c.height = h;
     const ctx = c.getContext("2d");
     ctx.filter = FILTERS[filterKey] || "none";
-    const half = w / 2;
-    drawVideoCover(ctx, videoLeft, 0, 0, half, h);
-    drawVideoCover(ctx, videoRight, half, 0, half, h);
-    ctx.filter = "none";
-    // garis pemisah tipis
-    ctx.fillStyle = "rgba(255,255,255,0.85)";
-    ctx.fillRect(half - 2, 0, 4, h);
+    if (videoRight) {
+      const half = w / 2;
+      drawVideoCover(ctx, videoLeft, 0, 0, half, h);
+      drawVideoCover(ctx, videoRight, half, 0, half, h);
+      ctx.filter = "none";
+      // garis pemisah tipis
+      ctx.fillStyle = "rgba(255,255,255,0.85)";
+      ctx.fillRect(half - 2, 0, 4, h);
+    } else {
+      drawVideoCover(ctx, videoLeft, 0, 0, w, h);
+      ctx.filter = "none";
+    }
     return c;
   }
 

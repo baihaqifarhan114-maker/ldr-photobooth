@@ -9,7 +9,8 @@
     result: $("screen-result"),
   };
 
-  let role = null;          // 'host' | 'guest'
+  let role = null;          // 'host' | 'guest' | 'solo'
+  const isSolo = () => role === "solo";
   let myName = "";
   let partnerName = "";
   let photos = [];
@@ -65,16 +66,18 @@
 
   function captionText() {
     const l = leftName() || "?", r = rightName() || "?";
-    if (state.captionMode === "initials") return `${l[0].toUpperCase()} ♥ ${r[0].toUpperCase()}`;
-    if (state.captionMode === "names") return `${l} ♥ ${r}`;
+    if (state.captionMode === "initials")
+      return isSolo() ? `${l[0].toUpperCase()} ♥` : `${l[0].toUpperCase()} ♥ ${r[0].toUpperCase()}`;
+    if (state.captionMode === "names") return isSolo() ? l : `${l} ♥ ${r}`;
     return state.customCaption;
   }
 
   function refreshCaptionChips() {
     const l = leftName() || "?", r = rightName() || "?";
     document.querySelector('#ctl-caption [data-value="initials"]').textContent =
-      `${l[0].toUpperCase()} ♥ ${r[0].toUpperCase()}`;
-    document.querySelector('#ctl-caption [data-value="names"]').textContent = `${l} ♥ ${r}`;
+      isSolo() ? `${l[0].toUpperCase()} ♥` : `${l[0].toUpperCase()} ♥ ${r[0].toUpperCase()}`;
+    document.querySelector('#ctl-caption [data-value="names"]').textContent =
+      isSolo() ? l : `${l} ♥ ${r}`;
   }
 
   // ---------- kontrol chip ----------
@@ -216,9 +219,25 @@
     }
   }
 
+  // Mode solo: langsung ke booth tanpa room/koneksi
+  async function startSolo() {
+    if (!requireName()) return;
+    try {
+      await startCamera();
+    } catch (_) { return; }
+    role = "solo";
+    $("stage-frame").classList.add("solo");
+    $("video-left").srcObject = Rtc.localStream;
+    $("tag-left").textContent = myName;
+    refreshCaptionChips();
+    show("booth");
+    applyState();
+  }
+
   function resetToLanding() {
     Rtc.close();
     Signaling.cleanup(role === "host");
+    $("stage-frame").classList.remove("solo");
     photos = [];
     busy = false;
     role = null;
@@ -257,7 +276,7 @@
       $("flash").classList.remove("on"); void $("flash").offsetWidth;
       $("flash").classList.add("on");
       const L = Strip.LAYOUTS[state.layout];
-      photos.push(Strip.capturePhoto($("video-left"), $("video-right"), state.filter, L.photoW, L.photoH));
+      photos.push(Strip.capturePhoto($("video-left"), isSolo() ? null : $("video-right"), state.filter, L.photoW, L.photoH));
       if (shot < total) await sleep(SHOT_INTERVAL_MS);
     }
 
@@ -303,6 +322,7 @@
   // ---------- event wiring ----------
   $("btn-create").addEventListener("click", createRoom);
   $("btn-join").addEventListener("click", joinRoom);
+  $("btn-solo").addEventListener("click", startSolo);
   $("input-code").addEventListener("keydown", (e) => e.key === "Enter" && joinRoom());
   $("btn-cancel").addEventListener("click", resetToLanding);
   $("btn-copy").addEventListener("click", async () => {

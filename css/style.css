@@ -166,6 +166,7 @@ input[type="text"]:focus { border-color: var(--pink-300); }
 }
 .video-half { position: relative; flex: 1; overflow: hidden; }
 .video-half + .video-half { border-left: 3px solid var(--white); }
+.stage-frame.solo .video-half + .video-half { display: none; }
 .video-half video {
   width: 100%; height: 100%;
   object-fit: cover;
