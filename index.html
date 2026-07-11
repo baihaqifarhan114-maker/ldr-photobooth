@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Photobooth Berdua 💕</title>
+  <meta name="description" content="Photobooth online untuk dua orang LDR — foto berdua dari laptop masing-masing.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Dancing+Script:wght@600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📸</text></svg>">
+</head>
+<body>
+
+  <div id="banner" class="banner hidden"></div>
+
+  <!-- ============ LANDING ============ -->
+  <section id="screen-landing" class="screen">
+    <div class="landing-card">
+      <div class="logo">📸</div>
+      <h1>Photobooth <span class="script">Berdua</span></h1>
+      <p class="tagline">Foto bareng walau beda kota 💕</p>
+
+      <label class="field">
+        <span>Nama kamu</span>
+        <input id="input-name" type="text" maxlength="20" placeholder="misal: Farhan" autocomplete="off">
+      </label>
+
+      <button id="btn-create" class="btn btn-primary">💝 Buat Room Baru</button>
+
+      <div class="divider"><span>atau gabung</span></div>
+
+      <div class="join-row">
+        <input id="input-code" type="text" maxlength="6" placeholder="KODE" autocomplete="off">
+        <button id="btn-join" class="btn btn-secondary">Gabung</button>
+      </div>
+    </div>
+    <p class="footnote">Video kalian mengalir langsung antar laptop (peer-to-peer) — tidak ada server yang menyimpan.</p>
+  </section>
+
+  <!-- ============ WAITING ROOM ============ -->
+  <section id="screen-wait" class="screen hidden">
+    <div class="landing-card">
+      <div class="logo pulse">💌</div>
+      <h2 id="wait-title">Room siap!</h2>
+      <p class="tagline">Kirim kode ini ke pasanganmu:</p>
+      <div class="code-display" id="code-display">------</div>
+      <button id="btn-copy" class="btn btn-secondary">📋 Salin kode</button>
+      <p class="wait-status" id="wait-status">Menunggu pasangan bergabung<span class="dots"></span></p>
+      <button id="btn-cancel" class="btn btn-ghost">Batal</button>
+    </div>
+  </section>
+
+  <!-- ============ BOOTH ============ -->
+  <section id="screen-booth" class="screen hidden">
+    <div class="booth-layout">
+
+      <div class="stage">
+        <div class="stage-frame" id="stage-frame">
+          <div class="video-half">
+            <video id="video-left" autoplay playsinline muted></video>
+            <span class="name-tag" id="tag-left">…</span>
+          </div>
+          <div class="video-half">
+            <video id="video-right" autoplay playsinline muted></video>
+            <span class="name-tag" id="tag-right">…</span>
+          </div>
+          <div id="countdown-overlay" class="countdown-overlay hidden"><span id="countdown-num">3</span></div>
+          <div id="shot-progress" class="shot-progress hidden">Foto <span id="shot-current">1</span> / <span id="shot-total">4</span></div>
+        </div>
+        <button id="btn-start" class="btn btn-primary btn-big">📸 Mulai Foto!</button>
+      </div>
+
+      <aside class="controls">
+        <h3>Layout</h3>
+        <div class="chip-row" id="ctl-layout">
+          <button class="chip active" data-value="strip4">Strip 4</button>
+          <button class="chip" data-value="strip3">Strip 3</button>
+          <button class="chip" data-value="grid2x2">Grid 2×2</button>
+        </div>
+
+        <h3>Tema frame</h3>
+        <div class="chip-row" id="ctl-theme">
+          <button class="chip active" data-value="pink">🌸 Pink pastel</button>
+          <button class="chip" data-value="film">🎞️ Classic film</button>
+          <button class="chip" data-value="cream">🌼 Cream daisy</button>
+          <button class="chip" data-value="sky">🩵 Sky blue</button>
+        </div>
+
+        <h3>Filter</h3>
+        <div class="chip-row" id="ctl-filter">
+          <button class="chip active" data-value="normal">Normal</button>
+          <button class="chip" data-value="bw">B&amp;W</button>
+          <button class="chip" data-value="vintage">Vintage</button>
+        </div>
+
+        <h3>Caption strip</h3>
+        <div class="chip-row" id="ctl-caption">
+          <button class="chip active" data-value="initials">F ♥ F</button>
+          <button class="chip" data-value="names">Nama ♥ Nama</button>
+          <button class="chip" data-value="custom">Custom</button>
+        </div>
+        <input id="input-caption" type="text" maxlength="30" placeholder="tulis caption..." class="hidden">
+        <label class="toggle-row">
+          <input type="checkbox" id="ctl-date" checked>
+          <span>Tampilkan tanggal</span>
+        </label>
+      </aside>
+
+    </div>
+    <div id="flash" class="flash"></div>
+  </section>
+
+  <!-- ============ RESULT ============ -->
+  <section id="screen-result" class="screen hidden">
+    <div class="result-wrap">
+      <h2>Hasil kalian 💕</h2>
+      <img id="result-img" alt="Hasil photobooth">
+      <div class="result-actions">
+        <button id="btn-download" class="btn btn-primary">⬇️ Download PNG</button>
+        <button id="btn-retake" class="btn btn-secondary">🔄 Foto lagi</button>
+      </div>
+    </div>
+  </section>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/signaling.js"></script>
+  <script src="js/webrtc.js"></script>
+  <script src="js/strip.js"></script>
+  <script src="js/booth.js"></script>
+</body>
+</html>
