@@ -8,10 +8,10 @@
 //    → Build > Realtime Database > Create (test mode)
 //    → Project settings > General > Your apps > Web app > copy config
 const FIREBASE_CONFIG = {
-  apiKey: "",
-  authDomain: "",
-  databaseURL: "",
-  projectId: "",
+  apiKey: "AIzaSyAHq02Cqfd4Qok6hRwsjOwjDFoj4viCALQ",
+  authDomain: "photobooth-98ae8.firebaseapp.com",
+  databaseURL: "https://photobooth-98ae8-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "photobooth-98ae8",
 };
 
 // 2) ICE SERVERS (koneksi antar laptop)
