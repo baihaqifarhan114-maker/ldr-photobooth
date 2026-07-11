@@ -77,6 +77,8 @@
       </div>
 
       <aside class="controls">
+        <div class="controls-grid">
+        <div class="controls-left">
         <h3>Layout</h3>
         <div class="chip-row" id="ctl-layout">
           <button class="chip active" data-value="strip4">Strip 4</button>
@@ -85,19 +87,16 @@
         </div>
 
         <h3>Tema frame</h3>
-        <div class="chip-row" id="ctl-theme">
-          <button class="chip active" data-value="pink">🌸 Pink pastel</button>
-          <button class="chip" data-value="film">🎞️ Classic film</button>
-          <button class="chip" data-value="cream">🌼 Cream daisy</button>
-          <button class="chip" data-value="sky">🩵 Sky blue</button>
-        </div>
+        <div class="chip-row" id="ctl-theme"></div>
 
         <h3>Filter</h3>
-        <div class="chip-row" id="ctl-filter">
-          <button class="chip active" data-value="normal">Normal</button>
-          <button class="chip" data-value="bw">B&amp;W</button>
-          <button class="chip" data-value="vintage">Vintage</button>
-          <button class="chip" data-value="blur">🫰 Kita blur</button>
+        <div class="chip-row" id="ctl-filter"></div>
+        </div>
+
+        <div class="controls-right">
+        <h3>Preview</h3>
+        <div class="preview-box"><img id="strip-preview" alt="Preview strip"></div>
+        </div>
         </div>
 
         <h3>Font caption</h3>

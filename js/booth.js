@@ -81,6 +81,16 @@
   }
 
   // ---------- kontrol chip ----------
+  // Chip tema & filter dibangun dari data di Strip (satu sumber kebenaran)
+  function buildChips() {
+    $("ctl-theme").innerHTML = Object.entries(Strip.THEMES).map(([key, t]) =>
+      `<button class="chip${key === state.theme ? " active" : ""}" data-value="${key}">` +
+      `<span class="swatch" style="background:${t.bg}"></span>${t.label}</button>`).join("");
+    $("ctl-filter").innerHTML = Object.keys(Strip.FILTERS).map((key) =>
+      `<button class="chip${key === state.filter ? " active" : ""}" data-value="${key}">` +
+      `${Strip.FILTER_LABELS[key]}</button>`).join("");
+  }
+
   function setupChips(groupId, key) {
     $(groupId).addEventListener("click", (e) => {
       const chip = e.target.closest(".chip");
@@ -104,11 +114,26 @@
     if (document.activeElement !== $("input-caption"))
       $("input-caption").value = state.customCaption;
     $("ctl-date").checked = state.showDate;
-    const frame = $("stage-frame");
-    frame.classList.remove("f-bw", "f-vintage", "f-blur");
-    if (state.filter === "bw") frame.classList.add("f-bw");
-    if (state.filter === "vintage") frame.classList.add("f-vintage");
-    if (state.filter === "blur") frame.classList.add("f-blur");
+    const f = Strip.FILTERS[state.filter] || "none";
+    document.querySelectorAll("#stage-frame video").forEach((v) => {
+      v.style.filter = f === "none" ? "" : f;
+    });
+    schedulePreview();
+  }
+
+  // ---------- live preview strip ----------
+  let previewTimer = null;
+  function schedulePreview() {
+    clearTimeout(previewTimer);
+    previewTimer = setTimeout(renderPreview, 180);
+  }
+  async function renderPreview() {
+    const F = Strip.CAPTION_FONTS[state.captionFont] || Strip.CAPTION_FONTS.dancing;
+    try { await document.fonts.load(F.css); } catch (_) {}
+    const c = Strip.previewStrip(
+      { layout: state.layout, theme: state.theme, filter: state.filter, captionFont: state.captionFont, solo: isSolo() },
+      captionText(), state.showDate);
+    $("strip-preview").src = c.toDataURL("image/jpeg", 0.85);
   }
 
   // ---------- koneksi ----------
@@ -342,11 +367,15 @@
   $("input-caption").addEventListener("input", () => {
     state.customCaption = $("input-caption").value;
     Rtc.send({ t: "state", state });
+    schedulePreview();
   });
   $("ctl-date").addEventListener("change", () => {
     state.showDate = $("ctl-date").checked;
     Rtc.send({ t: "state", state });
+    schedulePreview();
   });
+
+  buildChips();
 
   // preload semua font caption buat canvas
   try {

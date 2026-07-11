@@ -230,11 +230,29 @@ input[type="text"]:focus { border-color: var(--pink-300); }
 
 /* ---------- controls ---------- */
 .controls {
-  flex: 0 1 300px;
+  flex: 0 1 460px;
   background: var(--white);
   border-radius: 22px;
   box-shadow: var(--shadow);
   padding: 24px;
+}
+.controls-grid { display: flex; gap: 18px; }
+.controls-left { flex: 1; min-width: 0; }
+.controls-right { width: 148px; flex-shrink: 0; }
+.preview-box {
+  background: var(--pink-50);
+  border: 2px solid var(--pink-100);
+  border-radius: 14px;
+  padding: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+#strip-preview {
+  max-width: 100%;
+  max-height: 320px;
+  border-radius: 6px;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.12);
 }
 .controls h3 {
   font-size: 13px;
@@ -278,10 +296,15 @@ input[type="text"]:focus { border-color: var(--pink-300); }
 }
 .toggle-row input { width: 18px; height: 18px; accent-color: var(--pink-500); }
 
-/* ---------- filter previews ---------- */
-.stage-frame.f-bw video { filter: grayscale(1) contrast(1.05); }
-.stage-frame.f-vintage video { filter: sepia(0.45) contrast(1.05) saturate(1.3) brightness(1.02); }
-.stage-frame.f-blur video { filter: blur(7px) brightness(1.08) saturate(1.15); }
+/* ---------- theme swatch di chip ---------- */
+.swatch {
+  width: 13px; height: 13px;
+  border-radius: 4px;
+  display: inline-block;
+  margin-right: 5px;
+  vertical-align: -2px;
+  border: 1px solid rgba(0,0,0,0.12);
+}
 
 /* ---------- font picker previews ---------- */
 .fp-dancing { font-family: 'Dancing Script', cursive; font-size: 16px; }

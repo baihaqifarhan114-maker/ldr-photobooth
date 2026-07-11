@@ -3,9 +3,21 @@
 const Strip = (() => {
   const FILTERS = {
     normal: "none",
-    bw: "grayscale(1) contrast(1.05)",
+    warm: "sepia(0.25) saturate(1.25) brightness(1.06)",
+    cool: "saturate(1.05) brightness(1.04) hue-rotate(15deg)",
+    soft: "brightness(1.09) contrast(0.85) saturate(1.12)",
     vintage: "sepia(0.45) contrast(1.05) saturate(1.3) brightness(1.02)",
+    sepia: "sepia(0.85) contrast(1.02) brightness(1.03)",
+    bw: "grayscale(1) contrast(1.05)",
+    noir: "grayscale(1) contrast(1.4) brightness(0.94)",
+    pop: "saturate(1.65) contrast(1.15)",
     blur: "blur(7px) brightness(1.08) saturate(1.15)", // tren "kita blur" 🫰
+  };
+
+  const FILTER_LABELS = {
+    normal: "Normal", warm: "☀️ Warm", cool: "❄️ Cool", soft: "🌷 Soft",
+    vintage: "🎞️ Vintage", sepia: "🟤 Sepia", bw: "B&W", noir: "🖤 Noir",
+    pop: "🍭 Pop", blur: "🫰 Kita blur",
   };
 
   // Font caption — key harus cocok dengan chip #ctl-font
@@ -17,30 +29,57 @@ const Strip = (() => {
     bebas:      { css: '62px "Bebas Neue", sans-serif',       dateGap: 46 },
   };
 
+  const DATE_FONT = '500 26px Poppins, sans-serif';
   const THEMES = {
     pink: {
-      bg: "#F5E6E8", border: "#FFFFFF", borderW: 10,
-      captionColor: "#993556", dateColor: "#C97A93",
-      dateFont: '500 26px Poppins, sans-serif',
+      label: "🌸 Pink", bg: "#F5E6E8", border: "#FFFFFF", borderW: 10,
+      captionColor: "#993556", dateColor: "#C97A93", dateFont: DATE_FONT,
       deco: "♥", decoColor: "#ED93B1",
     },
-    film: {
-      bg: "#1E1E1E", border: "#111111", borderW: 6,
-      captionColor: "#F5F0E8", dateColor: "#B8B2A6",
-      dateFont: '500 26px Poppins, sans-serif',
-      deco: null, sprockets: true,
+    lavender: {
+      label: "💜 Lavender", bg: "#EEEDFE", border: "#FFFFFF", borderW: 10,
+      captionColor: "#3C3489", dateColor: "#7F77DD", dateFont: DATE_FONT,
+      deco: "✿", decoColor: "#AFA9EC",
     },
-    cream: {
-      bg: "#FBF6EC", border: "#FFFFFF", borderW: 10,
-      captionColor: "#8A6B3F", dateColor: "#BBA37E",
-      dateFont: '500 26px Poppins, sans-serif',
-      deco: "✿", decoColor: "#E8C766",
+    mint: {
+      label: "🍃 Mint", bg: "#E1F5EE", border: "#FFFFFF", borderW: 10,
+      captionColor: "#085041", dateColor: "#1D9E75", dateFont: DATE_FONT,
+      deco: "♡", decoColor: "#5DCAA5",
     },
     sky: {
-      bg: "#E6F1FB", border: "#FFFFFF", borderW: 10,
-      captionColor: "#185FA5", dateColor: "#7FA8CC",
-      dateFont: '500 26px Poppins, sans-serif',
+      label: "🩵 Sky", bg: "#E6F1FB", border: "#FFFFFF", borderW: 10,
+      captionColor: "#185FA5", dateColor: "#7FA8CC", dateFont: DATE_FONT,
       deco: "♡", decoColor: "#85B7EB",
+    },
+    cream: {
+      label: "🌼 Cream", bg: "#FBF6EC", border: "#FFFFFF", borderW: 10,
+      captionColor: "#8A6B3F", dateColor: "#BBA37E", dateFont: DATE_FONT,
+      deco: "✿", decoColor: "#E8C766",
+    },
+    kraft: {
+      label: "📦 Kraft", bg: "#E5D5B7", border: "#FFF9EE", borderW: 10,
+      captionColor: "#5F4522", dateColor: "#96794D", dateFont: DATE_FONT,
+      deco: "✦", decoColor: "#B98A4E",
+    },
+    love: {
+      label: "❤️ Love", bg: "#7A1F2B", border: "#F5E6E8", borderW: 10,
+      captionColor: "#FFE3EA", dateColor: "#E89AAD", dateFont: DATE_FONT,
+      deco: "♥", decoColor: "#E86A8A",
+    },
+    midnight: {
+      label: "🌙 Midnight", bg: "#1C2340", border: "#2E3860", borderW: 8,
+      captionColor: "#E8ECFF", dateColor: "#8FA0D9", dateFont: DATE_FONT,
+      deco: "✧", decoColor: "#6E82C9",
+    },
+    film: {
+      label: "🎞️ Film", bg: "#1E1E1E", border: "#111111", borderW: 6,
+      captionColor: "#F5F0E8", dateColor: "#B8B2A6", dateFont: DATE_FONT,
+      deco: null, sprockets: true,
+    },
+    polaroid: {
+      label: "🤍 Polaroid", bg: "#FFFFFF", border: "#F1EFE8", borderW: 8,
+      captionColor: "#4A3540", dateColor: "#A9939E", dateFont: DATE_FONT,
+      deco: null,
     },
   };
 
@@ -158,5 +197,41 @@ const Strip = (() => {
     return c;
   }
 
-  return { FILTERS, THEMES, LAYOUTS, CAPTION_FONTS, capturePhoto, composeStrip };
+  // Foto dummy (siluet) untuk live preview sebelum sesi foto
+  function makePlaceholderPhoto(w, h, filterKey, solo) {
+    const c = document.createElement("canvas");
+    c.width = w; c.height = h;
+    const ctx = c.getContext("2d");
+    ctx.filter = FILTERS[filterKey] || "none";
+
+    function person(cx, baseY, r) {
+      ctx.fillStyle = "rgba(255,255,255,0.9)";
+      ctx.beginPath(); ctx.arc(cx, baseY - r * 1.7, r, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(cx, baseY + r * 0.9, r * 1.55, r * 1.25, 0, Math.PI, 0); ctx.fill();
+    }
+
+    if (solo) {
+      ctx.fillStyle = "#EFC3D2"; ctx.fillRect(0, 0, w, h);
+      person(w / 2, h * 0.72, h * 0.17);
+    } else {
+      const half = w / 2;
+      ctx.fillStyle = "#EFC3D2"; ctx.fillRect(0, 0, half, h);
+      ctx.fillStyle = "#BCD7F2"; ctx.fillRect(half, 0, half, h);
+      person(half * 0.5, h * 0.72, h * 0.16);
+      person(half * 1.5, h * 0.72, h * 0.16);
+      ctx.fillStyle = "rgba(255,255,255,0.85)";
+      ctx.fillRect(half - 2, 0, 4, h);
+    }
+    ctx.filter = "none";
+    return c;
+  }
+
+  function previewStrip({ layout, theme, filter, captionFont, solo }, caption, showDate) {
+    const L = LAYOUTS[layout];
+    const photo = makePlaceholderPhoto(L.photoW, L.photoH, filter, solo);
+    const photos = Array.from({ length: L.shots }, () => photo);
+    return composeStrip(photos, { layout, theme, caption, showDate, captionFont });
+  }
+
+  return { FILTERS, FILTER_LABELS, THEMES, LAYOUTS, CAPTION_FONTS, capturePhoto, composeStrip, previewStrip };
 })();
