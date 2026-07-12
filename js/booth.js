@@ -155,19 +155,39 @@
     $("tag-right").textContent = rightName() || "…";
   }
 
+  let dropTimer = null;
+  let everConnected = false;
   function wireRtcHandlers() {
+    everConnected = false;
     Rtc.on({
       onRemoteStream: (stream) => attachVideos(stream),
+      onChannelOpen: () => Rtc.send({ t: "hello", name: myName }),
       onConnected: () => {
+        everConnected = true;
+        clearTimeout(dropTimer); dropTimer = null;
         Signaling.cleanup(role === "host");
-        Rtc.send({ t: "hello", name: myName });
         show("booth");
         applyState();
         banner(`Tersambung! 🎉`, { info: true });
       },
-      onDisconnected: () => {
-        banner(`${partnerName || "Pasangan"} terputus 😢 — kembali ke awal.`, { sticky: true });
-        setTimeout(resetToLanding, 2500);
+      onDisconnected: (state) => {
+        if (!everConnected) {
+          banner("Gagal menyambungkan 😔 Jaringan salah satu dari kalian memblokir koneksi langsung (butuh TURN relay — lihat README). Coba pindah ke hotspot HP lalu ulangi.", { sticky: true });
+          setTimeout(resetToLanding, 6000);
+          return;
+        }
+        if (state === "disconnected") {
+          // sering cuma gangguan sesaat — kasih waktu recover
+          banner("Koneksi goyang... mencoba nyambung lagi 🙏", { sticky: true });
+          clearTimeout(dropTimer);
+          dropTimer = setTimeout(() => {
+            banner(`${partnerName || "Pasangan"} terputus 😢 — kembali ke awal.`, { sticky: true });
+            setTimeout(resetToLanding, 2000);
+          }, 10000);
+        } else {
+          banner(`${partnerName || "Pasangan"} terputus 😢 — kembali ke awal.`, { sticky: true });
+          setTimeout(resetToLanding, 2500);
+        }
       },
       onData: handleData,
     });
@@ -260,6 +280,7 @@
   }
 
   function resetToLanding() {
+    clearTimeout(dropTimer); dropTimer = null;
     Rtc.close();
     Signaling.cleanup(role === "host");
     $("stage-frame").classList.remove("solo");

@@ -15,21 +15,14 @@ const FIREBASE_CONFIG = {
 };
 
 // 2) ICE SERVERS (koneksi antar laptop)
-//    Default: STUN Google + TURN gratis Open Relay Project.
-//    Kalau koneksi sering gagal, daftar gratis di https://www.metered.ca/tools/openrelay/
-//    lalu tambahkan kredensialmu di bawah.
+//    Default: STUN Google (gratis, cukup untuk banyak jaringan rumah).
+//    KALAU sering stuck di "Menghubungkan..." (jaringan CGNAT/kampus/kantor),
+//    kalian butuh TURN relay: daftar GRATIS di https://dashboard.metered.ca/signup
+//    (20GB/bulan) -> buat app -> copy blok "ICE Servers" -> tempel menggantikan
+//    array di bawah. Kredensial publik openrelayproject sudah MATI, jangan dipakai.
 const ICE_SERVERS = [
   { urls: "stun:stun.l.google.com:19302" },
   { urls: "stun:stun1.l.google.com:19302" },
-  {
-    urls: [
-      "turn:standard.relay.metered.ca:80",
-      "turn:standard.relay.metered.ca:443",
-      "turns:standard.relay.metered.ca:443?transport=tcp",
-    ],
-    username: "openrelayproject",
-    credential: "openrelayproject",
-  },
 ];
 
 // Jumlah detik countdown sebelum tiap jepretan

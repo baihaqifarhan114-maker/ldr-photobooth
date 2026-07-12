@@ -4,7 +4,8 @@ const Rtc = (() => {
   let pc = null;
   let dataChannel = null;
   let localStream = null;
-  let handlers = {}; // { onRemoteStream, onData, onConnected, onDisconnected }
+  let pendingSends = [];
+  let handlers = {}; // { onRemoteStream, onData, onChannelOpen, onConnected, onDisconnected }
 
   async function getCamera() {
     localStream = await navigator.mediaDevices.getUserMedia({
@@ -48,6 +49,13 @@ const Rtc = (() => {
     dataChannel.onmessage = (e) => {
       try { handlers.onData && handlers.onData(JSON.parse(e.data)); } catch (_) {}
     };
+    dataChannel.onopen = () => {
+      for (const msg of pendingSends) dataChannel.send(msg);
+      pendingSends = [];
+      handlers.onChannelOpen && handlers.onChannelOpen();
+    };
+    // channel bisa saja sudah open sebelum handler terpasang
+    if (dataChannel.readyState === "open") dataChannel.onopen();
   }
 
   // Host memulai: buat offer, tunggu answer
@@ -76,12 +84,16 @@ const Rtc = (() => {
   }
 
   function send(obj) {
+    const msg = JSON.stringify(obj);
     if (dataChannel && dataChannel.readyState === "open") {
-      dataChannel.send(JSON.stringify(obj));
+      dataChannel.send(msg);
+    } else if (pc) {
+      pendingSends.push(msg); // channel belum open — antre, dikirim saat onopen
     }
   }
 
   function close() {
+    pendingSends = [];
     if (dataChannel) { try { dataChannel.close(); } catch (_) {} dataChannel = null; }
     if (pc) { try { pc.close(); } catch (_) {} pc = null; }
     if (localStream) {
