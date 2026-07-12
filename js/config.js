@@ -15,15 +15,38 @@ const FIREBASE_CONFIG = {
 };
 
 // 2) ICE SERVERS (koneksi antar laptop)
-//    Default: STUN Google (gratis, cukup untuk banyak jaringan rumah).
-//    KALAU sering stuck di "Menghubungkan..." (jaringan CGNAT/kampus/kantor),
-//    kalian butuh TURN relay: daftar GRATIS di https://dashboard.metered.ca/signup
-//    (20GB/bulan) -> buat app -> copy blok "ICE Servers" -> tempel menggantikan
-//    array di bawah. Kredensial publik openrelayproject sudah MATI, jangan dipakai.
-const ICE_SERVERS = [
+//    TURN relay via Metered (app: ilovefrida, gratis 20GB/bulan).
+//    Kredensial segar di-fetch dari API tiap halaman dibuka; kalau fetch gagal,
+//    fallback ke kredensial statis di bawah.
+const METERED_CREDS_URL =
+  "https://ilovefrida.metered.live/api/v1/turn/credentials?apiKey=2a1683f8f8a68face47db3d6f56a8d03e984";
+
+let ICE_SERVERS = [
   { urls: "stun:stun.l.google.com:19302" },
-  { urls: "stun:stun1.l.google.com:19302" },
+  { urls: "stun:stun.relay.metered.ca:80" },
+  {
+    urls: [
+      "turn:global.relay.metered.ca:80",
+      "turn:global.relay.metered.ca:80?transport=tcp",
+      "turn:global.relay.metered.ca:443",
+      "turns:global.relay.metered.ca:443?transport=tcp",
+    ],
+    username: "3d0d373d8332de6fd94e6a2a",
+    credential: "Q37RE7mLkYUcSD+f",
+  },
 ];
+
+// Ambil kredensial TURN terbaru (non-blocking; selesai jauh sebelum user klik apa pun)
+(async () => {
+  try {
+    const r = await fetch(METERED_CREDS_URL);
+    if (!r.ok) return;
+    const fresh = await r.json();
+    if (Array.isArray(fresh) && fresh.length) {
+      ICE_SERVERS = [{ urls: "stun:stun.l.google.com:19302" }, ...fresh];
+    }
+  } catch (_) { /* pakai fallback statis */ }
+})();
 
 // Jumlah detik countdown sebelum tiap jepretan
 const COUNTDOWN_SECONDS = 3;
