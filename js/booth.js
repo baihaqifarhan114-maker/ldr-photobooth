@@ -482,6 +482,7 @@
   setupChips("ctl-filter", "filter");
   setupChips("ctl-caption", "captionMode");
   setupChips("ctl-font", "captionFont");
+  setupChips("ctl-sticker", "stickerSet");
 
   $("input-caption").addEventListener("input", () => {
     state.customCaption = $("input-caption").value;
