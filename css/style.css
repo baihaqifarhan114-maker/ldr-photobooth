@@ -325,6 +325,42 @@ input[type="text"]:focus { border-color: var(--pink-300); }
 .result-actions { display: flex; gap: 12px; margin-top: 22px; justify-content: center; }
 .result-actions .btn { width: auto; }
 
+/* ---------- galeri ---------- */
+.gallery-wrap { text-align: center; width: 100%; max-width: 900px; }
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 16px;
+  margin: 24px 0;
+}
+.gallery-card {
+  background: var(--white);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.gallery-card img {
+  width: 100%;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.gallery-card .gc-date { font-size: 11px; color: #9c7a88; }
+.gallery-card .gc-actions { display: flex; gap: 6px; justify-content: center; }
+.gallery-card .gc-actions button {
+  font-family: inherit;
+  font-size: 12px;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 10px;
+  cursor: pointer;
+  background: var(--pink-100);
+  color: var(--pink-700);
+}
+.gallery-card .gc-actions button:hover { background: var(--pink-300); color: #fff; }
+
 @media (max-width: 700px) {
   .booth-layout { flex-direction: column; align-items: stretch; }
   .controls { flex: 1 1 auto; }

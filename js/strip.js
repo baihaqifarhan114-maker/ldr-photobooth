@@ -30,6 +30,62 @@ const Strip = (() => {
   };
 
   const DATE_FONT = '500 26px Poppins, sans-serif';
+
+  // ---------- pattern & aset ----------
+  const IMAGES = {};
+  function loadAssets() {
+    for (const t of Object.values(THEMES)) {
+      if (t.logo && !IMAGES[t.logo]) {
+        const img = new Image();
+        img.src = t.logo;
+        IMAGES[t.logo] = img;
+      }
+    }
+  }
+
+  // pseudo-random deterministik biar preview stabil
+  const prand = (i) => { const x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
+
+  function scatterEmoji(ctx, W, H, chars, count, minSize, maxSize, alpha) {
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    for (let i = 0; i < count; i++) {
+      const size = minSize + prand(i * 3) * (maxSize - minSize);
+      const x = prand(i * 3 + 1) * W;
+      const y = prand(i * 3 + 2) * H;
+      ctx.font = `${Math.round(size)}px serif`;
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate((prand(i * 7) - 0.5) * 0.9);
+      ctx.fillText(chars[i % chars.length], 0, 0);
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+
+  function confettiDots(ctx, W, H, colors, count) {
+    ctx.save();
+    for (let i = 0; i < count; i++) {
+      ctx.fillStyle = colors[i % colors.length];
+      ctx.globalAlpha = 0.5 + prand(i) * 0.5;
+      const r = 3 + prand(i * 5) * 6;
+      ctx.beginPath();
+      ctx.arc(prand(i * 3 + 1) * W, prand(i * 3 + 2) * H, r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function diagStripes(ctx, W, H, color, alpha, gap, w) {
+    ctx.save();
+    ctx.globalAlpha = alpha; ctx.strokeStyle = color; ctx.lineWidth = w;
+    for (let x = -H; x < W + H; x += gap) {
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x + H, H); ctx.stroke();
+    }
+    ctx.restore();
+  }
+
   const THEMES = {
     pink: {
       label: "🌸 Pink", bg: "#F5E6E8", border: "#FFFFFF", borderW: 10,
@@ -80,6 +136,49 @@ const Strip = (() => {
       label: "🤍 Polaroid", bg: "#FFFFFF", border: "#F1EFE8", borderW: 8,
       captionColor: "#4A3540", dateColor: "#A9939E", dateFont: DATE_FONT,
       deco: null,
+    },
+    // ---- template 2x6 style ----
+    gold: {
+      label: "🖤 Black & Gold", bg: "#141210", border: "#C9A227", borderW: 6,
+      captionColor: "#E8C766", dateColor: "#9C824A", dateFont: DATE_FONT,
+      deco: null,
+      pattern: (ctx, W, H) => confettiDots(ctx, W, H, ["#C9A227", "#E8C766", "#7A6420"], 90),
+    },
+    rosegold: {
+      label: "🩷 Rose Gold", bg: "#F7E7E4", border: "#FFFFFF", borderW: 10,
+      captionColor: "#B76E79", dateColor: "#C99CA3", dateFont: DATE_FONT,
+      deco: null,
+      pattern: (ctx, W, H) => { confettiDots(ctx, W, H, ["#B76E79", "#E3B7BD", "#D8A48F"], 70); scatterEmoji(ctx, W, H, ["✨"], 14, 20, 34, 0.8); },
+    },
+    newspaper: {
+      label: "📰 Newspaper", bg: "#F4EFE4", border: "#1E1C18", borderW: 5,
+      captionColor: "#1E1C18", dateColor: "#6B655A", dateFont: '500 26px "Courier New", monospace',
+      deco: null,
+      pattern: (ctx, W, H) => {
+        ctx.save(); ctx.globalAlpha = 0.10; ctx.fillStyle = "#1E1C18";
+        ctx.font = "16px Georgia, serif";
+        for (let y = 20; y < H; y += 26)
+          ctx.fillText("THE DAILY US • EXTRA! EXTRA! • LOVE NEWS • ".repeat(4), -(y % 60), y);
+        ctx.restore();
+      },
+    },
+    tropical: {
+      label: "🌴 Tropical", bg: "#DFF3EC", border: "#FFFFFF", borderW: 10,
+      captionColor: "#0B6B4F", dateColor: "#4FA98B", dateFont: DATE_FONT,
+      deco: null,
+      pattern: (ctx, W, H) => scatterEmoji(ctx, W, H, ["🌴", "🌺", "🍍", "🌊"], 26, 26, 46, 0.9),
+    },
+    cherry: {
+      label: "🍒 Cherry", bg: "#FFF3EE", border: "#FFFFFF", borderW: 10,
+      captionColor: "#B3232A", dateColor: "#D98A8E", dateFont: DATE_FONT,
+      deco: null,
+      pattern: (ctx, W, H) => scatterEmoji(ctx, W, H, ["🍒", "🍓", "🎀"], 24, 24, 42, 0.9),
+    },
+    manutd: {
+      label: "🔴 Man United", bg: "#B80007", border: "#FFFFFF", borderW: 8,
+      captionColor: "#FBE122", dateColor: "#FFD9DB", dateFont: DATE_FONT,
+      deco: null, logo: "assets/mu.webp",
+      pattern: (ctx, W, H) => diagStripes(ctx, W, H, "#8F0005", 0.6, 46, 16),
     },
   };
 
@@ -135,13 +234,42 @@ const Strip = (() => {
     }
   }
 
+  // Stiker emoji di pinggiran strip
+  function drawStickers(ctx, W, H, chars) {
+    ctx.save();
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    for (let i = 0; i < 16; i++) {
+      const side = i % 2;
+      const x = side ? W - 24 - prand(i * 13) * 30 : 24 + prand(i * 13) * 30;
+      const y = 46 + prand(i * 11 + 5) * (H - 110);
+      const size = 30 + prand(i * 17) * 14;
+      ctx.font = `${Math.round(size)}px serif`;
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate((prand(i * 23) - 0.5) * 0.8);
+      ctx.fillText(chars[i % chars.length], 0, 0);
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+
+  const STICKER_SETS = {
+    none: { label: "Tanpa", chars: null },
+    love: { label: "💕 Love", chars: ["💕", "💘", "🫰", "❤️‍🔥"] },
+    cute: { label: "🎀 Cute", chars: ["🎀", "🌷", "🧸", "⭐"] },
+    party: { label: "🎉 Party", chars: ["🎉", "🎊", "🥳", "✨"] },
+    bola: { label: "⚽ Bola", chars: ["⚽", "🔴", "🏆", "🔥"] },
+  };
+
   // Susun foto-foto jadi strip final
-  function composeStrip(photos, { layout, theme, caption, showDate, captionFont }) {
+  function composeStrip(photos, { layout, theme, caption, showDate, captionFont, stickers }) {
     const L = LAYOUTS[layout], T = THEMES[theme];
     const rows = Math.ceil(L.shots / L.cols);
     const sidePad = T.sprockets ? PAD + 24 : PAD;
     const W = sidePad * 2 + L.cols * L.photoW + (L.cols - 1) * GAP;
-    const capH = caption || showDate ? CAPTION_H : PAD;
+    const logoImg = T.logo && IMAGES[T.logo] && IMAGES[T.logo].complete && IMAGES[T.logo].naturalWidth ? IMAGES[T.logo] : null;
+    const logoH = logoImg ? 128 : 0;
+    const capH = (caption || showDate ? CAPTION_H : PAD) + logoH;
     const H = PAD + rows * L.photoH + (rows - 1) * GAP + capH + (T.sprockets ? 20 : 0);
 
     const c = document.createElement("canvas");
@@ -150,6 +278,7 @@ const Strip = (() => {
 
     ctx.fillStyle = T.bg;
     ctx.fillRect(0, 0, W, H);
+    if (T.pattern) T.pattern(ctx, W, H);
     if (T.sprockets) drawSprockets(ctx, W, H);
 
     photos.forEach((photo, i) => {
@@ -164,7 +293,12 @@ const Strip = (() => {
     });
 
     // caption + tanggal
-    const capTop = PAD + rows * L.photoH + (rows - 1) * GAP;
+    let capTop = PAD + rows * L.photoH + (rows - 1) * GAP;
+    if (logoImg) {
+      const lh = 112, lw = lh * (logoImg.naturalWidth / logoImg.naturalHeight);
+      ctx.drawImage(logoImg, (W - lw) / 2, capTop + 10, lw, lh);
+      capTop += logoH;
+    }
     const F = CAPTION_FONTS[captionFont] || CAPTION_FONTS.dancing;
     ctx.textAlign = "center";
     if (caption) {
@@ -193,6 +327,8 @@ const Strip = (() => {
       ctx.fillText(T.deco, sidePad / 2 + 6, H - 40);
       ctx.fillText(T.deco, W - sidePad / 2 - 6, H - 40);
     }
+
+    if (stickers) drawStickers(ctx, W, H, stickers);
 
     return c;
   }
@@ -226,12 +362,12 @@ const Strip = (() => {
     return c;
   }
 
-  function previewStrip({ layout, theme, filter, captionFont, solo }, caption, showDate) {
+  function previewStrip({ layout, theme, filter, captionFont, solo, stickers }, caption, showDate) {
     const L = LAYOUTS[layout];
     const photo = makePlaceholderPhoto(L.photoW, L.photoH, filter, solo);
     const photos = Array.from({ length: L.shots }, () => photo);
-    return composeStrip(photos, { layout, theme, caption, showDate, captionFont });
+    return composeStrip(photos, { layout, theme, caption, showDate, captionFont, stickers });
   }
 
-  return { FILTERS, FILTER_LABELS, THEMES, LAYOUTS, CAPTION_FONTS, capturePhoto, composeStrip, previewStrip };
+  return { FILTERS, FILTER_LABELS, THEMES, LAYOUTS, CAPTION_FONTS, STICKER_SETS, capturePhoto, composeStrip, previewStrip, loadAssets };
 })();

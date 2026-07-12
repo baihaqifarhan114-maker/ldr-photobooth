@@ -23,7 +23,10 @@ const Rtc = (() => {
     pc.ontrack = (e) => handlers.onRemoteStream && handlers.onRemoteStream(e.streams[0]);
 
     pc.onconnectionstatechange = () => {
-      if (pc.connectionState === "connected") handlers.onConnected && handlers.onConnected();
+      if (pc.connectionState === "connected") {
+        capBitrate(); // hemat kuota TURN (500MB/bln)
+        handlers.onConnected && handlers.onConnected();
+      }
       if (["disconnected", "failed", "closed"].includes(pc.connectionState))
         handlers.onDisconnected && handlers.onDisconnected(pc.connectionState);
     };
@@ -81,6 +84,22 @@ const Rtc = (() => {
       await pc.setLocalDescription(answer);
       await Signaling.sendAnswer(answer);
     });
+  }
+
+  // Batasi bitrate video ~650kbps @24fps — kualitas masih oke buat foto,
+  // dan kuota TURN 500MB jadi cukup untuk ±50 menit sesi relay dua arah.
+  async function capBitrate() {
+    if (!pc) return;
+    for (const sender of pc.getSenders()) {
+      if (!sender.track || sender.track.kind !== "video") continue;
+      try {
+        const p = sender.getParameters();
+        if (!p.encodings || !p.encodings.length) p.encodings = [{}];
+        p.encodings[0].maxBitrate = 650000;
+        p.encodings[0].maxFramerate = 24;
+        await sender.setParameters(p);
+      } catch (err) { console.warn("capBitrate", err); }
+    }
   }
 
   function send(obj) {

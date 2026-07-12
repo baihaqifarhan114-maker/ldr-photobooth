@@ -7,6 +7,7 @@
     wait: $("screen-wait"),
     booth: $("screen-booth"),
     result: $("screen-result"),
+    gallery: $("screen-gallery"),
   };
 
   let role = null;          // 'host' | 'guest' | 'solo'
@@ -25,8 +26,10 @@
     captionMode: "initials", // initials | names | custom
     customCaption: "",
     captionFont: "dancing",
+    stickerSet: "none",
     showDate: true,
   };
+  const stickerChars = () => Strip.STICKER_SETS[state.stickerSet] ? Strip.STICKER_SETS[state.stickerSet].chars : null;
 
   // ---------- util layar & banner ----------
   function show(name) {
@@ -89,6 +92,8 @@
     $("ctl-filter").innerHTML = Object.keys(Strip.FILTERS).map((key) =>
       `<button class="chip${key === state.filter ? " active" : ""}" data-value="${key}">` +
       `${Strip.FILTER_LABELS[key]}</button>`).join("");
+    $("ctl-sticker").innerHTML = Object.entries(Strip.STICKER_SETS).map(([key, s]) =>
+      `<button class="chip${key === state.stickerSet ? " active" : ""}" data-value="${key}">${s.label}</button>`).join("");
   }
 
   function setupChips(groupId, key) {
@@ -105,7 +110,7 @@
     for (const [groupId, key] of [
       ["ctl-layout", "layout"], ["ctl-theme", "theme"],
       ["ctl-filter", "filter"], ["ctl-caption", "captionMode"],
-      ["ctl-font", "captionFont"],
+      ["ctl-font", "captionFont"], ["ctl-sticker", "stickerSet"],
     ]) {
       document.querySelectorAll(`#${groupId} .chip`).forEach((c) =>
         c.classList.toggle("active", c.dataset.value === state[key]));
@@ -131,7 +136,7 @@
     const F = Strip.CAPTION_FONTS[state.captionFont] || Strip.CAPTION_FONTS.dancing;
     try { await document.fonts.load(F.css); } catch (_) {}
     const c = Strip.previewStrip(
-      { layout: state.layout, theme: state.theme, filter: state.filter, captionFont: state.captionFont, solo: isSolo() },
+      { layout: state.layout, theme: state.theme, filter: state.filter, captionFont: state.captionFont, solo: isSolo(), stickers: stickerChars() },
       captionText(), state.showDate);
     $("strip-preview").src = c.toDataURL("image/jpeg", 0.85);
   }
@@ -341,8 +346,10 @@
       caption: captionText(),
       showDate: state.showDate,
       captionFont: state.captionFont,
+      stickers: stickerChars(),
     });
     $("result-img").src = resultCanvas.toDataURL("image/png");
+    saveToGallery(resultCanvas);
     show("result");
     downloadStrip(); // auto-download
   }
@@ -355,6 +362,94 @@
     a.download = `photobooth-berdua-${stamp}.png`;
     a.href = resultCanvas.toDataURL("image/png");
     a.click();
+  }
+
+  // ---------- galeri kenangan (localStorage, privat per browser) ----------
+  const GALLERY_KEY = "pb_gallery";
+  const loadGallery = () => { try { return JSON.parse(localStorage.getItem(GALLERY_KEY)) || []; } catch (_) { return []; } };
+
+  function saveToGallery(canvas) {
+    // simpan versi kecil (jpeg, lebar 480) biar muat banyak di localStorage
+    const scale = 480 / canvas.width;
+    const c = document.createElement("canvas");
+    c.width = 480; c.height = Math.round(canvas.height * scale);
+    c.getContext("2d").drawImage(canvas, 0, 0, c.width, c.height);
+    const items = loadGallery();
+    items.unshift({ d: c.toDataURL("image/jpeg", 0.82), t: Date.now(), c: captionText() });
+    while (items.length > 12) items.pop();
+    try { localStorage.setItem(GALLERY_KEY, JSON.stringify(items)); }
+    catch (_) {
+      items.splice(6); // storage penuh — simpan lebih sedikit
+      try { localStorage.setItem(GALLERY_KEY, JSON.stringify(items)); } catch (_) {}
+    }
+  }
+
+  function renderGallery() {
+    const items = loadGallery();
+    $("gallery-empty").classList.toggle("hidden", items.length > 0);
+    $("gallery-grid").innerHTML = items.map((it, i) => {
+      const d = new Date(it.t);
+      const ds = `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
+      return `<div class="gallery-card">
+        <img src="${it.d}" alt="strip" data-idx="${i}">
+        <span class="gc-date">${it.c ? it.c + " · " : ""}${ds}</span>
+        <div class="gc-actions">
+          <button data-act="dl" data-idx="${i}">⬇️</button>
+          <button data-act="del" data-idx="${i}">🗑️</button>
+        </div>
+      </div>`;
+    }).join("");
+  }
+
+  $("gallery-grid").addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-act]");
+    if (!btn) return;
+    const items = loadGallery();
+    const i = +btn.dataset.idx;
+    if (!items[i]) return;
+    if (btn.dataset.act === "dl") {
+      const a = document.createElement("a");
+      a.download = `photobooth-kenangan-${i + 1}.jpg`;
+      a.href = items[i].d;
+      a.click();
+    } else if (confirm("Hapus kenangan ini?")) {
+      items.splice(i, 1);
+      localStorage.setItem(GALLERY_KEY, JSON.stringify(items));
+      renderGallery();
+    }
+  });
+
+  // ---------- download GIF (foto-foto bergantian) ----------
+  async function downloadGif() {
+    if (!photos.length) return;
+    const btn = $("btn-gif");
+    btn.disabled = true; btn.textContent = "⏳ Bikin GIF...";
+    try {
+      await new Promise((r) => setTimeout(r, 30)); // biar label sempat render
+      const W = 480, H = Math.round(photos[0].height * (W / photos[0].width));
+      const gif = gifenc.GIFEncoder();
+      const c = document.createElement("canvas");
+      c.width = W; c.height = H;
+      const ctx = c.getContext("2d");
+      for (const p of photos) {
+        ctx.drawImage(p, 0, 0, W, H);
+        const { data } = ctx.getImageData(0, 0, W, H);
+        const palette = gifenc.quantize(data, 256);
+        const index = gifenc.applyPalette(data, palette);
+        gif.writeFrame(index, W, H, { palette, delay: 550 });
+      }
+      gif.finish();
+      const blob = new Blob([gif.bytes()], { type: "image/gif" });
+      const a = document.createElement("a");
+      a.download = "photobooth-berdua.gif";
+      a.href = URL.createObjectURL(blob);
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+    } catch (err) {
+      console.error(err);
+      banner("Gagal bikin GIF 😅 coba lagi");
+    }
+    btn.disabled = false; btn.textContent = "🎞️ Download GIF";
   }
 
   function doRetake(isInitiator) {
@@ -377,7 +472,10 @@
   });
   $("btn-start").addEventListener("click", () => runSequence(true));
   $("btn-download").addEventListener("click", downloadStrip);
+  $("btn-gif").addEventListener("click", downloadGif);
   $("btn-retake").addEventListener("click", () => doRetake(true));
+  $("btn-gallery").addEventListener("click", () => { renderGallery(); show("gallery"); });
+  $("btn-gallery-back").addEventListener("click", () => show("landing"));
 
   setupChips("ctl-layout", "layout");
   setupChips("ctl-theme", "theme");
@@ -397,6 +495,7 @@
   });
 
   buildChips();
+  Strip.loadAssets(); // preload logo tema (MU dkk)
 
   // preload semua font caption buat canvas
   try {

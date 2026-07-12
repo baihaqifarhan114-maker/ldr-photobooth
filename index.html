@@ -39,6 +39,7 @@
       <div class="divider"><span>atau</span></div>
 
       <button id="btn-solo" class="btn btn-secondary">🤳 Foto Sendiri</button>
+      <button id="btn-gallery" class="btn btn-ghost">🖼️ Galeri Kenangan</button>
     </div>
     <p class="footnote">This was made special for my gf, Frida &lt;3</p>
   </section>
@@ -91,6 +92,9 @@
 
         <h3>Filter</h3>
         <div class="chip-row" id="ctl-filter"></div>
+
+        <h3>Stiker</h3>
+        <div class="chip-row" id="ctl-sticker"></div>
         </div>
 
         <div class="controls-right">
@@ -132,13 +136,26 @@
       <img id="result-img" alt="Hasil photobooth">
       <div class="result-actions">
         <button id="btn-download" class="btn btn-primary">⬇️ Download PNG</button>
+        <button id="btn-gif" class="btn btn-secondary">🎞️ Download GIF</button>
         <button id="btn-retake" class="btn btn-secondary">🔄 Foto lagi</button>
       </div>
     </div>
   </section>
 
+  <!-- ============ GALERI ============ -->
+  <section id="screen-gallery" class="screen hidden">
+    <div class="gallery-wrap">
+      <h2>🖼️ Galeri <span class="script">Kenangan</span></h2>
+      <p class="tagline">Tersimpan di browser ini aja — privat punya kalian 💕</p>
+      <div id="gallery-grid" class="gallery-grid"></div>
+      <p id="gallery-empty" class="tagline hidden">Belum ada kenangan... yuk foto dulu! 📸</p>
+      <button id="btn-gallery-back" class="btn btn-secondary" style="max-width:200px">← Kembali</button>
+    </div>
+  </section>
+
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+  <script src="js/vendor/gifenc.js"></script>
   <script src="js/config.js"></script>
   <script src="js/signaling.js"></script>
   <script src="js/webrtc.js"></script>
