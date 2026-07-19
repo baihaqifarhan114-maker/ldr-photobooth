@@ -161,15 +161,18 @@
   }
 
   let dropTimer = null;
+  let failTimer = null;
   let everConnected = false;
   function wireRtcHandlers() {
     everConnected = false;
+    clearTimeout(failTimer); failTimer = null;
     Rtc.on({
       onRemoteStream: (stream) => attachVideos(stream),
       onChannelOpen: () => Rtc.send({ t: "hello", name: myName }),
       onConnected: () => {
         everConnected = true;
         clearTimeout(dropTimer); dropTimer = null;
+        clearTimeout(failTimer); failTimer = null;
         Signaling.cleanup(role === "host");
         show("booth");
         applyState();
@@ -177,8 +180,15 @@
       },
       onDisconnected: (state) => {
         if (!everConnected) {
-          banner("Gagal menyambungkan 😔 Jaringan salah satu dari kalian memblokir koneksi langsung (butuh TURN relay — lihat README). Coba pindah ke hotspot HP lalu ulangi.", { sticky: true });
-          setTimeout(resetToLanding, 6000);
+          // Jangan langsung nyerah — host mungkin lagi ICE-restart, dan candidate
+          // relay bisa telat. Kasih grace 15 detik; kalau nyambung, timer dibatalkan.
+          banner("Masih berusaha menyambung... 🙏 (kadang butuh beberapa detik lewat relay)", { sticky: true });
+          if (!failTimer) {
+            failTimer = setTimeout(() => {
+              banner("Gagal menyambungkan 😔 Coba: (1) dua-duanya refresh & ulangi, (2) salah satu ganti ke hotspot HP / WiFi lain. Kalau tetap gagal, kabari aku.", { sticky: true });
+              setTimeout(resetToLanding, 7000);
+            }, 15000);
+          }
           return;
         }
         if (state === "disconnected") {
@@ -286,6 +296,7 @@
 
   function resetToLanding() {
     clearTimeout(dropTimer); dropTimer = null;
+    clearTimeout(failTimer); failTimer = null;
     Rtc.close();
     Signaling.cleanup(role === "host");
     $("stage-frame").classList.remove("solo");
